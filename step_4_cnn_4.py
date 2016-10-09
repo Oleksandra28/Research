@@ -49,9 +49,6 @@ WINDOW_SIZE = 3
 
 def my_conv_model(x, y):
 
-    print("x ", tf.shape(x))
-    print("y ", tf.shape(y))
-
     # to form a 4d tensor of shape batch_size x 1 x N_FEATURES x 1
     x = tf.reshape(x, [-1, 1, N_FEATURES, 1])
 
@@ -61,8 +58,10 @@ def my_conv_model(x, y):
                                                kernel_size=[1, WINDOW_SIZE],
                                                padding='VALID')
 
-    print("features ", tf.shape(features)[0], tf.shape(features)[1], tf.shape(features)[2], tf.shape(features)[3]) #features  (?, 1, 3638, 10)
-    print(features) # Tensor("Conv/Relu:0", shape=(?, 1, 3638, 10), dtype=float32)
+    # features == Tensor("Conv/Relu:0", shape=(?, 1, 3638, 10), dtype=float32)
+
+    # Add a RELU for non linearity.
+    features = tf.nn.relu(features)
 
     # Max pooling across output of Convolution+Relu.
     pool = tf.nn.max_pool(features, ksize=[1, 1, 2, 1],
@@ -78,9 +77,9 @@ def my_conv_model(x, y):
     y = tf.expand_dims(y, 1)
 
     pool_shape = tf.shape(pool)
-    # y_shape = tf.shape(y)
-    y = tf.expand_dims(y, 1)
-    print("pool_shape (2): ", pool_shape) #pool  (?, 1, 1819, 10)
+    y_shape = tf.shape(y)
+
+    print("pool_shape (2): ", pool_shape, pool.get_shape()) #pool  (?, 1, 1819, 10)
     print("y_shape (2):    ", y_shape) #y  (?,)
 
     prediction, loss = learn.models.logistic_regression(pool, y)

@@ -5,6 +5,8 @@ import string
 from sklearn.preprocessing import OneHotEncoder
 import time
 import pandas as pd
+import pickle
+from os import path
 
 #--------------------------------------------------------------------------------------
 def read_txt(filepath):
@@ -109,15 +111,17 @@ def load_clean_dataset(filepath0,filepath1, lower=True):
 #--------------------------------------------------------------------------------------
 def get_encoder(lower=True, n_columns=140):
 
-    encoder_exists = False
+    encoder_filename = "./encoder-pickle.dat"
+    encoder_exists = path.isfile(encoder_filename)
 
     if encoder_exists:
         ### pickle encoder
-        encoder = None
+        encoder = pickle.load(open(encoder_filename, "rb"))
     else:
         encoder = OneHotEncoder(categorical_features='all', \
                             sparse=False, \
                             handle_unknown='ignore')
+        pickle.dump(encoder, open(encoder_filename, "wb"))
 
     ### encode as One-Hot
     dummy_vector = np.array(wanted_chars_numeric(upper=not lower))
