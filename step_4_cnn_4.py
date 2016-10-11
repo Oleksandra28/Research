@@ -32,112 +32,83 @@ import skflow
 import numpy as np
 from cnn_utilities import *
 from sklearn.cross_validation import train_test_split, cross_val_score
-from sklearn.metrics import *
 
 
 import numpy as np
 from sklearn import metrics
-import pandas
+import traceback
 
 import tensorflow as tf
 from tensorflow.contrib import learn
+import sys
 
 N_FEATURES = 140*26
 N_FILTERS = 10
 WINDOW_SIZE = 3
 
 
+
+
 def my_conv_model(x, y):
+    global N
+    # 1. form a 4d tensor of shape N x 1 x N_FEATURES x 1
+    x = tf.reshape(x, [N, 1, N_FEATURES, 1])
 
-    # to form a 4d tensor of shape batch_size x 1 x N_FEATURES x 1
-    x = tf.reshape(x, [-1, 1, N_FEATURES, 1])
-
-    # this will give sliding window of 1 x WINDOW_SIZE convolution.
+    # 2. this will give sliding window of 1 x WINDOW_SIZE convolution.
+    # kernel_size - size of a sliding window
     features = tf.contrib.layers.convolution2d(inputs=x,
                                                num_outputs=N_FILTERS,
                                                kernel_size=[1, WINDOW_SIZE],
-                                               padding='VALID')
+                                               stride=[1,1],
+                                               padding='VALID',
+                                               rate=0.1)
 
-    # features == Tensor("Conv/Relu:0", shape=(?, 1, 3638, 10), dtype=float32)
-
-    # Add a RELU for non linearity.
+    # 3. Add a RELU for non linearity.
     features = tf.nn.relu(features)
 
-    # Max pooling across output of Convolution+Relu.
+    # 4. Max pooling across output of Convolution+Relu.
     pool = tf.nn.max_pool(features, ksize=[1, 1, 2, 1],
                              strides=[1, 1, 2, 1], padding='SAME')
 
-    pool_shape = tf.shape(pool)
-    y_shape = tf.shape(y)
-    print("pool_shape (1): ", pool_shape) #pool  (?, 1, 1819, 10)
-    print("y_shape (1):    ", y_shape) #y  (?,)
+    print("(1) pool_shape", pool.get_shape()) #pool  (?, 1, 1819, 10)
+    print("(1) y_shape", y.get_shape()) #y  (?,)
 
-    pool = tf.reshape(pool, [pool_shape[0], pool_shape[2]*pool_shape[3]])
-    #y = tf.reshape(y, [y_shape[0], 1])
+    #pool_shape = tf.shape(pool)
+    pool_shape = pool.get_shape()
+    #pool = tf.reshape(pool, [pool_shape[0], pool_shape[2]*pool_shape[3]])
+    pool = tf.reshape(pool, [N, 18190])
     y = tf.expand_dims(y, 1)
+    y = tf.reshape(y, [N, 1])
 
-    pool_shape = tf.shape(pool)
-    y_shape = tf.shape(y)
+    print("(2) pool_shape", pool.get_shape()) #pool  (?, 1, 1819, 10)
+    print("(2) y_shape", y.get_shape()) #y  (?,)
 
-    print("pool_shape (2): ", pool_shape, pool.get_shape()) #pool  (?, 1, 1819, 10)
-    print("y_shape (2):    ", y_shape) #y  (?,)
+    try:
+        exc_info = sys.exc_info()
 
-    prediction, loss = learn.models.logistic_regression(pool, y)
-    return prediction, loss
+        print("(3) pool_shape", pool.get_shape())
+        print("(3) y_shape", y.get_shape())
 
-"""
-# N = 256
-# FILTER_SHAPE1 = [20, N]
-# FILTER_SHAPE2 = [20, N_FILTERS]
-# POOLING_WINDOW = 4
-# POOLING_STRIDE = 2
-# def char_cnn_model(x, y):
-#     ###Character level convolutional neural network model to predict classes.
-#
-#     x = tf.cast(x, tf.float32)
-#     y = tf.cast(y, tf.float32)
-#
-#     print("x ", tf.shape(x)) #Tensor("Shape:0", shape=(2,), dtype=int32)
-#     print("y ", tf.shape(y)) #Tensor("Shape_1:0", shape=(1,), dtype=int32)
-#
-#     byte_list = tf.reshape(x, [-1, N_FEATURES, 1, 1])
-#     with tf.variable_scope('CNN_Layer1'):
-#       # Apply Convolution filtering on input sequence.
-#       conv1 = tf.contrib.layers.convolution2d(inputs=byte_list,
-#                                               num_outputs=N_FILTERS,
-#                                               kernel_size=FILTER_SHAPE1,
-#                                               padding='VALID')
-#       # Add a RELU for non linearity.
-#       conv1 = tf.nn.relu(conv1)
-#       # Max pooling across output of Convolution+Relu.
-#       pool1 = tf.nn.max_pool(conv1, ksize=[1, POOLING_WINDOW, 1, 1],
-#                              strides=[1, POOLING_STRIDE, 1, 1], padding='SAME')
-#       # Transpose matrix so that n_filters from convolution becomes width.
-#       pool1 = tf.transpose(pool1, [0, 1, 3, 2])
-#     with tf.variable_scope('CNN_Layer2'):
-#       # Second level of convolution filtering.
-#       conv2 = tf.contrib.layers.convolution2d(inputs=pool1,
-#                                               num_outputs=N_FILTERS,
-#                                               kernel_size=FILTER_SHAPE2,
-#                                               padding='VALID')
-#       # Max across each filter to get useful features for classification.
-#       pool2 = tf.squeeze(tf.reduce_max(conv2, 1), squeeze_dims=[1])
-#
-#     print (pool2.get_shape()) #(?, 10)
-#     print (y.get_shape()) #(?,)
-#     print (pool2) #(?, 10)
-#     print (y) #(?,)
-#     # Apply regular WX + B and classification.
-#     prediction, loss = learn.models.logistic_regression(pool2, y)
-#
-#     train_op = tf.contrib.layers.optimize_loss(
-#         loss, tf.contrib.framework.get_global_step(),
-#         optimizer='Adam', learning_rate=0.01)
-#
-#     return {'class': tf.argmax(prediction, 1), 'prob': prediction}, loss, train_op
-"""
+        prediction, loss = learn.models.logistic_regression(pool, y)
+        train_op = tf.contrib.layers.optimize_loss(
+        loss, tf.contrib.framework.get_global_step(),
+        optimizer='Adam', learning_rate=0.01)
+
+        print("====================================================")
+
+        return {'class': tf.argmax(prediction, 1), 'prob': prediction}, loss, train_op
+
+    except Exception:
+        #print(traceback.format_exc())
+        pass
+    finally:
+        # Display the *original* exception
+        traceback.print_exception(*exc_info)
+        del exc_info
 
 def main(unused_argv):
+
+    global N
 
     # training and testing data encoded as one-hot
     data_folder = './data'
@@ -146,18 +117,39 @@ def main(unused_argv):
     sandyLabels = np.loadtxt(data_folder+'/sandyLabels.csv', delimiter=',')
 
     x_train, x_test, y_train, y_test = \
-        train_test_split(sandyData, sandyLabels, test_size=0.2, random_state=7)
+        train_test_split(sandyData, sandyLabels, test_size=0.2)#, random_state=3)
 
     x_train = np.array(x_train, dtype=np.float32)
     x_test = np.array(x_test, dtype=np.float32)
     y_train = np.array(y_train, dtype=np.float32)
     y_test = np.array(y_test, dtype=np.float32)
 
+    print(x_train.shape) #(7196, 3640)
+    print(y_train.shape)
+
+    N = x_train.shape[0]
+
+    # x_train = x_train[:N,:]
+    # y_train = y_train[:N]
+    print(x_train.shape)
+    print(y_train.shape)
+
+
+
+    # x_test = x_test[:N,:]
+    # y_test = y_test[:N]
+
+    print(x_test.shape)
+
     # Build model
     classifier = learn.Estimator(model_fn=my_conv_model)
 
     # Train and predict
     classifier.fit(x_train, y_train, steps=100)
+
+    N = y_test.shape[0]
+
+    print("---after fitting---")
     y_predicted = [p['class'] for p in classifier.predict(x_test, as_iterable=True)]
     score = metrics.accuracy_score(y_test, y_predicted)
     print('Accuracy: {0:f}'.format(score))
