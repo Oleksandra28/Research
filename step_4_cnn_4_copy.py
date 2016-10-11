@@ -116,12 +116,47 @@ def my_conv_model(x, y):
                            ksize=[1, 1, 2, 1],
                            strides=[1, 1, 2, 1],
                            padding='SAME')
+    ##########################################################################
+    ##### Fully connected layer 1 #####
 
-    last_layer = pool5
+    last_pool_layer = pool5
+    last_pool_layer_shape = last_pool_layer.get_shape()
+    n_cols = (last_pool_layer_shape[2] * last_pool_layer_shape[3]).value
+    last_pool_layer = tf.reshape(last_pool_layer, [-1, n_cols])
+
+
+    #
+    # W_fc1 = weight_variable([last_pool_layer_shape[0].value, n_cols])
+    # b_fc1 = bias_variable([n_cols])
+    #
+    # fc_layer1 = tf.nn.relu(tf.matmul(last_pool_layer, W_fc1) + b_fc1)
+    # fc_layer1 = tf.nn.dropout(fc_layer1, keep_prob=0.5)
+
+    fc_layer1 = tf.contrib.layers.fully_connected(inputs=last_pool_layer,
+                                      num_outputs=10,
+                                      activation_fn=tf.nn.relu
+                                      )
+
+    ##########################################################################
+    ##### Fully connected layer 2 #####
+
+    # last_pool_layer = pool5
+    # last_pool_layer_shape = last_pool_layer.get_shape()
+    # n_cols = (last_pool_layer_shape[2] * last_pool_layer_shape[3]).value
+    # last_pool_layer = tf.reshape(last_pool_layer, [-1, n_cols])
+    #
+    # W_fc1 = weight_variable([last_pool_layer_shape[0].value, n_cols])
+    # b_fc1 = bias_variable([n_cols])
+    #
+    # fc_layer1 = tf.nn.relu(tf.matmul(last_pool_layer, W_fc1) + b_fc1)
+
+
+
+    last_layer = fc_layer1
     try:
         last_layer_shape = last_layer.get_shape()
         print("last_layer_shape", last_layer_shape)
-        last_layer = tf.reshape(last_layer, [-1, (last_layer_shape[2] * last_layer_shape[3]).value])
+        #last_layer = tf.reshape(last_layer, [-1, (last_layer_shape[2] * last_layer_shape[3]).value])
 
         exc_info = sys.exc_info()
 
@@ -156,7 +191,7 @@ def main(unused_argv):
     sandyLabels = np.loadtxt(data_folder+'/sandyLabels.csv', delimiter=',')
 
     x_train, x_test, y_train, y_test = \
-        train_test_split(sandyData, sandyLabels, test_size=0.2)#, random_state=3)
+        train_test_split(sandyData, sandyLabels, test_size=0.2, random_state=7)
 
     x_train = np.array(x_train, dtype=np.float32)
     x_test = np.array(x_test, dtype=np.float32)
@@ -169,13 +204,13 @@ def main(unused_argv):
     #N = x_train.shape[0]
     N = 100
 
-    x_train = x_train[:N,:]
-    y_train = y_train[:N]
+    # x_train = x_train[:N,:]
+    # y_train = y_train[:N]
     print(x_train.shape)
     print(y_train.shape)
 
-    # x_test = x_test[:N,:]
-    # y_test = y_test[:N]
+    x_test = x_test[:N,:]
+    y_test = y_test[:N]
 
     print(x_test.shape)
 

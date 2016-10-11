@@ -57,3 +57,14 @@ def conv_model(X, y):
     # densely connected layer with 1024 neurons
     h_fc1 = skflow.ops.dnn(h_pool2_flat, [IMAGE_WIDTH*IMAGE_HEIGHT], activation=tf.nn.relu, dropout=0.5)
     return skflow.models.logistic_regression(h_fc1, y)
+
+
+
+def weight_variable(shape):
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    return tf.Variable(initial)
+
+
+def bias_variable(shape):
+    initial = tf.constant(0.1, shape=shape)
+    return tf.Variable(initial)
