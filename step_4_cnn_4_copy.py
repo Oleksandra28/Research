@@ -48,50 +48,60 @@ WINDOW_SIZE = 3
 
 
 def my_conv_model(x, y):
-    global N
+
     # 1. form a 4d tensor of shape N x 1 x N_FEATURES x 1
-    x = tf.reshape(x, [N, 1, N_FEATURES, 1])
+    x = tf.reshape(x, [-1, 1, N_FEATURES, 1])
 
     # 2. this will give sliding window of 1 x WINDOW_SIZE convolution.
     # kernel_size - size of a sliding window
-    features = tf.contrib.layers.convolution2d(inputs=x,
+    conv1 = tf.contrib.layers.convolution2d(inputs=x,
                                                num_outputs=N_FILTERS,
                                                kernel_size=[1, WINDOW_SIZE],
                                                stride=[1,1],
-                                               padding='VALID',
-                                               rate=0.1)
+                                               padding='VALID')
 
     # 3. Add a RELU for non linearity.
-    features = tf.nn.relu(features)
+    conv1 = tf.nn.relu(conv1)
 
     # 4. Max pooling across output of Convolution+Relu.
-    pool = tf.nn.max_pool(features, ksize=[1, 1, 2, 1],
+    pool1 = tf.nn.max_pool(conv1, ksize=[1, 1, 2, 1],
                              strides=[1, 1, 2, 1], padding='SAME')
 
-    print("(1) pool_shape", pool.get_shape()) #pool  (?, 1, 1819, 10)
+    print("(1) pool_shape", pool1.get_shape()) #pool  (?, 1, 1819, 10)
     print("(1) y_shape", y.get_shape()) #y  (?,)
 
-    #pool_shape = tf.shape(pool)
-    pool_shape = pool.get_shape()
-    #pool = tf.reshape(pool, [pool_shape[0], pool_shape[2]*pool_shape[3]])
-    pool = tf.reshape(pool, [N, 18190])
-    y = tf.expand_dims(y, 1)
-    y = tf.reshape(y, [N, 1])
+    pool_shape = pool1.get_shape()
+    #pool1 = tf.reshape(pool1, [-1, (pool_shape[2] * pool_shape[3]).value])
 
-    print("(2) pool_shape", pool.get_shape()) #pool  (?, 1, 1819, 10)
+    y = tf.expand_dims(y, 1)
+
+    print("(2) pool_shape", pool1.get_shape()) #pool  (?, 1, 1819, 10)
     print("(2) y_shape", y.get_shape()) #y  (?,)
+
+    # Second level of convolution filtering.
+    conv2 = tf.contrib.layers.convolution2d(inputs=pool1,
+                                            num_outputs=N_FILTERS,
+                                            kernel_size=[1, WINDOW_SIZE],
+                                            padding='VALID')
+    # Max across each filter to get useful features for classification.
+    #pool2 = tf.squeeze(tf.reduce_max(conv2, 1), squeeze_dims=[1])
+    pool2 = tf.nn.max_pool(conv2, ksize=[1, 1, 2, 1],
+                             strides=[1, 1, 2, 1], padding='SAME')
+    pool_shape = pool2.get_shape()
+    pool2 = tf.reshape(pool2, [-1, (pool_shape[2] * pool_shape[3]).value])
 
     try:
         exc_info = sys.exc_info()
 
-        print("(3) pool_shape", pool.get_shape())
+        print("(3) pool_shape", pool2.get_shape())
         print("(3) y_shape", y.get_shape())
 
-        prediction, loss = learn.models.logistic_regression(pool, y)
+        prediction, loss = learn.models.logistic_regression(pool2, y)
         train_op = tf.contrib.layers.optimize_loss(
-        loss, tf.contrib.framework.get_global_step(),
-        optimizer='Adam', learning_rate=0.01)
-
+                    loss=loss,
+                    global_step=tf.contrib.framework.get_global_step(),
+                    optimizer='SGD',
+                    learning_rate=0.001)
         print("====================================================")
 
         return {'class': tf.argmax(prediction, 1), 'prob': prediction}, loss, train_op
@@ -101,8 +111,9 @@ def my_conv_model(x, y):
         pass
     finally:
         # Display the *original* exception
-        traceback.print_exception(*exc_info)
-        del exc_info
+        #traceback.print_exception(*exc_info)
+        #del exc_info
+        pass
 
 def main(unused_argv):
 
@@ -125,10 +136,11 @@ def main(unused_argv):
     print(x_train.shape) #(7196, 3640)
     print(y_train.shape)
 
-    N = x_train.shape[0]
+    #N = x_train.shape[0]
+    N = 100
 
-    # x_train = x_train[:N,:]
-    # y_train = y_train[:N]
+    x_train = x_train[:N,:]
+    y_train = y_train[:N]
     print(x_train.shape)
     print(y_train.shape)
 
