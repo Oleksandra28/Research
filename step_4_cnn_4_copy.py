@@ -52,57 +52,87 @@ def my_conv_model(x, y):
     # 1. form a 4d tensor of shape N x 1 x N_FEATURES x 1
     x = tf.reshape(x, [-1, 1, N_FEATURES, 1])
 
-    # 2. this will give sliding window of 1 x WINDOW_SIZE convolution.
-    # kernel_size - size of a sliding window
+    ##########################################################################
+    ##### Conv layer 1 #####
     conv1 = tf.contrib.layers.convolution2d(inputs=x,
-                                               num_outputs=N_FILTERS,
-                                               kernel_size=[1, WINDOW_SIZE],
-                                               stride=[1,1],
-                                               padding='VALID')
+                                            num_outputs=N_FILTERS,
+                                            kernel_size=[1, 7],
+                                            stride=[1, 1],
+                                            padding='VALID')
 
     # 3. Add a RELU for non linearity.
     conv1 = tf.nn.relu(conv1)
 
     # 4. Max pooling across output of Convolution+Relu.
-    pool1 = tf.nn.max_pool(conv1, ksize=[1, 1, 2, 1],
-                             strides=[1, 1, 2, 1], padding='SAME')
+    pool1 = tf.nn.max_pool(conv1,
+                           ksize=[1, 1, 2, 1],
+                           strides=[1, 1, 2, 1],
+                           padding='SAME')
 
-    print("(1) pool_shape", pool1.get_shape()) #pool  (?, 1, 1819, 10)
-    print("(1) y_shape", y.get_shape()) #y  (?,)
-
-    pool_shape = pool1.get_shape()
-    #pool1 = tf.reshape(pool1, [-1, (pool_shape[2] * pool_shape[3]).value])
-
-    y = tf.expand_dims(y, 1)
-
-    print("(2) pool_shape", pool1.get_shape()) #pool  (?, 1, 1819, 10)
-    print("(2) y_shape", y.get_shape()) #y  (?,)
-
-    # Second level of convolution filtering.
+    ##########################################################################
+    ##### Conv layer 2 #####
     conv2 = tf.contrib.layers.convolution2d(inputs=pool1,
                                             num_outputs=N_FILTERS,
-                                            kernel_size=[1, WINDOW_SIZE],
+                                            kernel_size=[1, 6],
                                             padding='VALID')
-    # Max across each filter to get useful features for classification.
-    #pool2 = tf.squeeze(tf.reduce_max(conv2, 1), squeeze_dims=[1])
-    pool2 = tf.nn.max_pool(conv2, ksize=[1, 1, 2, 1],
-                             strides=[1, 1, 2, 1], padding='SAME')
-    pool_shape = pool2.get_shape()
-    pool2 = tf.reshape(pool2, [-1, (pool_shape[2] * pool_shape[3]).value])
 
+    pool2 = tf.nn.max_pool(conv2,
+                           ksize=[1, 1, 2, 1],
+                           strides=[1, 1, 2, 1],
+                           padding='SAME')
+
+    ##########################################################################
+    ##### Conv layer 3 #####
+    conv3 = tf.contrib.layers.convolution2d(inputs=pool2,
+                                            num_outputs=N_FILTERS,
+                                            kernel_size=[1, 7],
+                                            padding='VALID')
+
+    pool3 = tf.nn.max_pool(conv3,
+                           ksize=[1, 1, 2, 1],
+                           strides=[1, 1, 2, 1],
+                           padding='SAME')
+
+    ##########################################################################
+    ##### Conv layer 4 #####
+    conv4 = tf.contrib.layers.convolution2d(inputs=pool3,
+                                            num_outputs=N_FILTERS,
+                                            kernel_size=[1, 7],
+                                            padding='VALID')
+
+    pool4 = tf.nn.max_pool(conv4,
+                           ksize=[1, 1, 2, 1],
+                           strides=[1, 1, 2, 1],
+                           padding='SAME')
+
+    ##########################################################################
+    ##### Conv layer 5 #####
+    conv5 = tf.contrib.layers.convolution2d(inputs=pool4,
+                                            num_outputs=N_FILTERS,
+                                            kernel_size=[1, 7],
+                                            padding='VALID')
+
+    pool5 = tf.nn.max_pool(conv5,
+                           ksize=[1, 1, 2, 1],
+                           strides=[1, 1, 2, 1],
+                           padding='SAME')
+
+    last_layer = pool5
     try:
+        last_layer_shape = last_layer.get_shape()
+        print("last_layer_shape", last_layer_shape)
+        last_layer = tf.reshape(last_layer, [-1, (last_layer_shape[2] * last_layer_shape[3]).value])
+
         exc_info = sys.exc_info()
 
-        print("(3) pool_shape", pool2.get_shape())
-        print("(3) y_shape", y.get_shape())
+        y = tf.expand_dims(y, 1)
 
-        prediction, loss = learn.models.logistic_regression(pool2, y)
+        prediction, loss = learn.models.logistic_regression(last_layer, y)
         train_op = tf.contrib.layers.optimize_loss(
                     loss=loss,
                     global_step=tf.contrib.framework.get_global_step(),
                     optimizer='SGD',
                     learning_rate=0.001)
-        print("====================================================")
 
         return {'class': tf.argmax(prediction, 1), 'prob': prediction}, loss, train_op
 
@@ -155,7 +185,9 @@ def main(unused_argv):
     # Train and predict
     classifier.fit(x_train, y_train, steps=100)
 
-    N = y_test.shape[0]
+    #N = y_test.shape[0]
+
+    print("====================================================")
 
     print("---after fitting---")
     y_predicted = [p['class'] for p in classifier.predict(x_test, as_iterable=True)]
