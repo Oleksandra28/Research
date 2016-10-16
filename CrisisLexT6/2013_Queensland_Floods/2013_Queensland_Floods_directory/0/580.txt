@@ -1,0 +1,1 @@
+DVDs have different region codes  so American/Canada is 1  UK is 2 and Australia/NZ are region 4

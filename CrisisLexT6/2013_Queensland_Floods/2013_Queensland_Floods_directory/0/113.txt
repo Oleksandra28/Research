@@ -1,0 +1,1 @@
+'album artist' needs to be the same when sorting by album.

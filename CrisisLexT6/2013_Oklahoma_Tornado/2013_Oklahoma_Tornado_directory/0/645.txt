@@ -1,0 +1,1 @@
+English = Hello. Spanish = Hola. French = Bonjour. Japanese = Konnichiwa. Chinese = N Ho. Italian = Ciao. Me = Sup B*tch

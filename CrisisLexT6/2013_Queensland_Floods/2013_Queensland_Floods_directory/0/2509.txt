@@ -1,0 +1,1 @@
+Thats an interesting development. Using a Cloud Foundry provider for a few projects. So cool I may be tempted to set up my own. :)

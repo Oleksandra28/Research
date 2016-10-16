@@ -1,0 +1,1 @@
+More importantly theyd have to have real inter-process communications (like Android has) to link the sandboxed apps significantly.

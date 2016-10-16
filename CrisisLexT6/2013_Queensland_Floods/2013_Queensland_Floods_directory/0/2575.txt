@@ -1,0 +1,1 @@
+There is no IPC protocol at all for iOS right now. Zero. At the moment  any inter-app is done purely via URLs.

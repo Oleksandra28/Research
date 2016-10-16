@@ -1,0 +1,1 @@
+Did that. iPhone can't find network after Wi-fi off/on. Laptop after reboot gives timeout note.

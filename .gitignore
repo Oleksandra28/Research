@@ -3,3 +3,4 @@
 /dbpedia_data
 /dbpedia_data/*
 *.pyc
+/output

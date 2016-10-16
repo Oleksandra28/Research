@@ -1,0 +1,1 @@
+You may want to redirect the naked domain to the www URL for your site

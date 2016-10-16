@@ -1,0 +1,1 @@
+Sun 06:00: Temp 14.1 C; Humidity 96%; Press 101.7 kPa / falling; Health Idx 1.0.

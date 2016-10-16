@@ -63,7 +63,7 @@ def wanted_chars(upper=False):
     if upper:
         letters = string.ascii_lowercase + string.ascii_uppercase
 
-    result = [c for c in letters]
+    result = [c for c in letters+" "]
     return result
 
 #--------------------------------------------------------------------------------------

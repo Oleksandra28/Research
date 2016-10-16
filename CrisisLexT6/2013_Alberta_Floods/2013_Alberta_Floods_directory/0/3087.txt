@@ -1,0 +1,1 @@
+Tue 05:00: Temp 10.3 C; Humidity 97%; Press 100.0 kPa / rising; Health Idx 1.3.

@@ -1,0 +1,1 @@
+Mon 08:00: Temp 19.4 C; Humidity 79%; Press 101.7 kPa / rising; Health Idx 1.3.

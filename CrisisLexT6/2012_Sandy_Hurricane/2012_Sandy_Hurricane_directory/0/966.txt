@@ -1,0 +1,1 @@
+I had something like that on OS X  overriding drawRect and just calling super fixed some redraw issues
